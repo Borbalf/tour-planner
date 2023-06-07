@@ -1,4 +1,4 @@
-INSERT INTO City (name) VALUES ('Genova');
-INSERT INTO City (name) VALUES ('Savona');
-INSERT INTO City (name) VALUES ('Imperia');
-INSERT INTO City (name) VALUES ('La Spezia');
+INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Genova', 44.5, 8.98, 0);
+INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Savona', 44.5, 8.98, 0);
+INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Imperia', 44.5, 8.98, 0);
+INSERT INTO City (name, latitude, longitude, altitude) VALUES ('La Spezia', 44.5, 8.98, 0);
