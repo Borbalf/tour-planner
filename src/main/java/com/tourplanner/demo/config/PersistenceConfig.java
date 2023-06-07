@@ -19,6 +19,7 @@ public class PersistenceConfig {
         return new EmbeddedDatabaseBuilder()
                 .setType(EmbeddedDatabaseType.H2)
                 .addScript("schema.sql")
+                .addScript("data.sql")
                 .build();
     }
 
