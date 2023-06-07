@@ -1,3 +1,10 @@
-.idea
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-/tour-planner.iml
+.idea
+*.iws
+*.iml
+*.ipr
