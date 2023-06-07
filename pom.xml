@@ -15,6 +15,7 @@
 	<description>Test project - tour planner</description>
 	<properties>
 		<java.version>20</java.version>
+		<maven.compiler.source>20</maven.compiler.source>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -26,6 +27,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<version>RELEASE</version>
+			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 
