@@ -12,12 +12,18 @@ public class City {
     public City() {
     }
 
-    public City(Long ID, String name, BigDecimal latitude, BigDecimal longitude, BigDecimal altitude) {
-        this.ID = ID;
+    public City(String name, BigDecimal latitude, BigDecimal longitude, BigDecimal altitude) {
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
         this.altitude = altitude;
+    }
+
+    public City(String name, Double latitude, Double longitude, Double altitude) {
+        this.name = name;
+        this.latitude = BigDecimal.valueOf(latitude);
+        this.longitude = BigDecimal.valueOf(longitude);
+        this.altitude = BigDecimal.valueOf(altitude);
     }
 
     public Long getID() {
