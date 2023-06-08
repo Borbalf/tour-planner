@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import java.util.Date;
 import java.util.List;
 
 @Controller
@@ -207,7 +208,12 @@ public class MainController {
     public int deleteItinerary(Long ID) {
         try {
             log.info("called");
-            stayMapper.deleteStayByItineraryID(ID);
+            List<Stay> itineraryStays = stayMapper.findAllByItineraryID(ID);
+            if (itineraryStays != null) {
+                for (Stay stay : itineraryStays) {
+                    deleteStay(stay.getID()); //this also takes care of WeatherConditions
+                }
+            }
             return itineraryMapper.deleteItinerary(ID);
         } catch (IllegalArgumentException iae) {
             log.error("failed due to: " + iae.getMessage());
@@ -267,6 +273,8 @@ public class MainController {
 
             int result = stayMapper.insertStay(stay.getItineraryID(), stay.getCityID(), stay.getDescription(), stay.getStayDate());
 
+            //TODO insert WeatherCondition
+
             if (result == 0) {
                 throw new Exception("error while inserting");
             }
@@ -313,12 +321,18 @@ public class MainController {
                 throw new IllegalArgumentException("Stay does not exists");
             }
             Long oldItineraryID = stayToUpdate.getItineraryID();
+            Long oldCityID = stayToUpdate.getCityID();
+            Date oldStayDate = stayToUpdate.getStayDate();
             stayMapper.updateStay(stay.getID(), stay.getItineraryID(), stay.getCityID(), stay.getDescription(), stay.getStayDate());
 
             stay = stayMapper.findByID(stay.getID());
 
             if (stay == null) {
                 throw new Exception("error while updating");
+            }
+
+            if (!oldCityID.equals(stay.getCityID()) || !oldStayDate.equals(stay.getStayDate())) {
+                //TODO update WeatherCondition
             }
 
             if (!oldItineraryID.equals(stay.getItineraryID())) {
@@ -344,6 +358,8 @@ public class MainController {
     public int deleteStay(Long ID) {
         try {
             log.info("called");
+            //TODO decomment after weatherCondition CRUD
+            //weatherConditionMapper.deleteByStayID(ID);
             return stayMapper.deleteStay(ID);
         } catch (IllegalArgumentException iae) {
             log.error("failed due to: " + iae.getMessage());
