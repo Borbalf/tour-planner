@@ -8,4 +8,9 @@ INSERT INTO SkyCondition (condition) VALUES ('CLOUDY');
 INSERT INTO SkyCondition (condition) VALUES ('RAIN_SHOWERS');
 INSERT INTO SkyCondition (condition) VALUES ('SNOW_SHOWERS');
 
+INSERT INTO ItineraryStatus (status) VALUES ('NOT_READY');
+INSERT INTO ItineraryStatus (status) VALUES ('READY');
+INSERT INTO ItineraryStatus (status) VALUES ('CONFIRMED');
+INSERT INTO ItineraryStatus (status) VALUES ('DONE');
+
 INSERT INTO `User` (name, surname, email) VALUES ('Mario', 'Rossi', 'mario@rossi.com');

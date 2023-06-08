@@ -1,6 +1,7 @@
 package com.tourplanner.demo.controller;
 
 import com.tourplanner.demo.model.City;
+import com.tourplanner.demo.model.Itinerary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,10 @@ public class APIController {
     private MainController mainController;
 
     Logger log = LoggerFactory.getLogger(APIController.class);
+
+    /**
+     * CITY SECTION
+     */
 
     @GetMapping(value = "/cityByName/{name}")
     public ResponseEntity<City> getCityByName(@PathVariable String name) {
@@ -104,6 +109,94 @@ public class APIController {
         try {
             log.info("called");
             int result = mainController.deleteCity(ID);
+            if (result > 0) {
+                return new ResponseEntity<>(null, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * ITINERARY SECTION
+     */
+
+    @GetMapping(value = "/getAllItineraries")
+    public ResponseEntity<List<Itinerary>> getAllItineraries() {
+        try {
+            log.info("called");
+            return new ResponseEntity<>(mainController.getAllItineraries(), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/itinerary/{ID}")
+    public ResponseEntity<Itinerary> getItinerary(@PathVariable Long ID) {
+        try {
+            log.info("called");
+            Itinerary itinerary = mainController.getItineraryByID(ID);
+            if (itinerary != null) {
+                return new ResponseEntity<>(itinerary, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping(value = "/itinerary", consumes = "application/json")
+    public ResponseEntity<Itinerary> createItinerary(@RequestBody Itinerary itinerary) {
+        try {
+            log.info("called");
+            itinerary = mainController.createItinerary(itinerary);
+            if (itinerary != null) {
+                return new ResponseEntity<>(itinerary, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping(value = "/itinerary", consumes = "application/json")
+    public ResponseEntity<Itinerary> updateItinerary(@RequestBody Itinerary itinerary) {
+        try {
+            log.info("called");
+            itinerary = mainController.updateItinerary(itinerary);
+            if (itinerary != null) {
+                return new ResponseEntity<>(itinerary, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping(value = "/itinerary/{ID}")
+    public ResponseEntity<Itinerary> deleteItinerary(@PathVariable Long ID) {
+        try {
+            log.info("called");
+            int result = mainController.deleteItinerary(ID);
             if (result > 0) {
                 return new ResponseEntity<>(null, HttpStatus.OK);
             } else {
