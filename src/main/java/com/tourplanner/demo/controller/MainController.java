@@ -3,8 +3,10 @@ package com.tourplanner.demo.controller;
 import com.tourplanner.demo.ITINERARY_STATUS;
 import com.tourplanner.demo.mapper.CityMapper;
 import com.tourplanner.demo.mapper.ItineraryMapper;
+import com.tourplanner.demo.mapper.StayMapper;
 import com.tourplanner.demo.model.City;
 import com.tourplanner.demo.model.Itinerary;
+import com.tourplanner.demo.model.Stay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,9 @@ public class MainController {
 
     @Autowired
     private ItineraryMapper itineraryMapper;
+
+    @Autowired
+    private StayMapper stayMapper;
 
     Logger log = LoggerFactory.getLogger(MainController.class);
 
@@ -112,11 +117,10 @@ public class MainController {
     public int deleteCity(Long ID) {
         try {
             log.info("called");
-            //TODO decomment after creating Stays CRUD
-//            List<Stay> stays = stayMapper.findAllByCityID(ID);
-//            if (stays != null && !stays.isEmpty()) {
-//                throw new IllegalArgumentException("Some itineraries have at least a stay in this city, delete those first");
-//            }
+            List<Stay> stays = stayMapper.findAllByCityID(ID);
+            if (stays != null && !stays.isEmpty()) {
+                throw new IllegalArgumentException("Some itineraries have at least a stay in this city, delete those first");
+            }
             return cityMapper.deleteCity(ID);
         } catch (IllegalArgumentException iae) {
             log.error("failed due to: " + iae.getMessage());
@@ -203,9 +207,144 @@ public class MainController {
     public int deleteItinerary(Long ID) {
         try {
             log.info("called");
-            //TODO decomment after creating Stays CRUD
-//          stayMapper.deleteByItineraryID(ID);
+            stayMapper.deleteStayByItineraryID(ID);
             return itineraryMapper.deleteItinerary(ID);
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            throw iae;
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * STAY SECTION
+     */
+
+    public Stay getStayByID(Long ID) {
+        try {
+            log.info("called with param: " + ID);
+            return stayMapper.findByID(ID);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public List<Stay> getAllStays() {
+        try {
+            log.info("called");
+            return stayMapper.findAll();
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public List<Stay> getAllItineraryStays(Long itineraryID) {
+        try {
+            log.info("called");
+            return stayMapper.findAllByItineraryID(itineraryID);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public Stay createStay(Stay stay) {
+        try {
+            log.info("called");
+
+            Itinerary itinerary = itineraryMapper.findByID(stay.getItineraryID());
+            if (itinerary == null) {
+                throw new IllegalArgumentException("Itinerary does not exist");
+            }
+            City city = cityMapper.findByID(stay.getCityID());
+            if (city == null) {
+                throw new IllegalArgumentException("City does not exist");
+            }
+
+            int result = stayMapper.insertStay(stay.getItineraryID(), stay.getCityID(), stay.getDescription(), stay.getStayDate());
+
+            if (result == 0) {
+                throw new Exception("error while inserting");
+            }
+
+            Long stayID = stayMapper.findLatestID();
+
+            if (stayID == null) {
+                throw new Exception("error while inserting");
+            }
+
+            stay = stayMapper.findByID(stayID);
+            if (itinerary.getStatusID().equals(ITINERARY_STATUS.NOT_READY.getID())) {
+                List<Stay> itineraryStays = stayMapper.findAllByItineraryID(itinerary.getID());
+                if (itineraryStays.size() >= 2) {
+                    itineraryMapper.updateItinerary(itinerary.getID(), itinerary.getUserID(), ITINERARY_STATUS.READY.getID(), itinerary.getDescription(), itinerary.getStartDate(), itinerary.getEndDate());
+                }
+            }
+
+            return stay;
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            throw iae;
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public Stay updateStay(Stay stay) {
+        try {
+            log.info("called");
+
+            Itinerary itinerary = itineraryMapper.findByID(stay.getItineraryID());
+            if (itinerary == null) {
+                throw new IllegalArgumentException("Itinerary does not exist");
+            }
+            City city = cityMapper.findByID(stay.getCityID());
+            if (city == null) {
+                throw new IllegalArgumentException("City does not exist");
+            }
+
+            Stay stayToUpdate = stayMapper.findByID(stay.getID());
+            if (stayToUpdate == null) {
+                throw new IllegalArgumentException("Stay does not exists");
+            }
+            Long oldItineraryID = stayToUpdate.getItineraryID();
+            stayMapper.updateStay(stay.getID(), stay.getItineraryID(), stay.getCityID(), stay.getDescription(), stay.getStayDate());
+
+            stay = stayMapper.findByID(stay.getID());
+
+            if (stay == null) {
+                throw new Exception("error while updating");
+            }
+
+            if (!oldItineraryID.equals(stay.getItineraryID())) {
+                Itinerary oldItinerary = itineraryMapper.findByID(oldItineraryID);
+                if (oldItinerary.getStatusID().equals(ITINERARY_STATUS.READY.getID())) {
+                    List<Stay> itineraryStays = stayMapper.findAllByItineraryID(oldItineraryID);
+                    if (itineraryStays.size() < 2) {
+                        itineraryMapper.updateItinerary(oldItinerary.getID(), oldItinerary.getUserID(), ITINERARY_STATUS.NOT_READY.getID(), oldItinerary.getDescription(), oldItinerary.getStartDate(), oldItinerary.getEndDate());
+                    }
+                }
+            }
+
+            return stay;
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            throw iae;
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public int deleteStay(Long ID) {
+        try {
+            log.info("called");
+            return stayMapper.deleteStay(ID);
         } catch (IllegalArgumentException iae) {
             log.error("failed due to: " + iae.getMessage());
             throw iae;

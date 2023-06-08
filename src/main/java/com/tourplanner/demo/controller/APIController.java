@@ -2,6 +2,7 @@ package com.tourplanner.demo.controller;
 
 import com.tourplanner.demo.model.City;
 import com.tourplanner.demo.model.Itinerary;
+import com.tourplanner.demo.model.Stay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -197,6 +198,105 @@ public class APIController {
         try {
             log.info("called");
             int result = mainController.deleteItinerary(ID);
+            if (result > 0) {
+                return new ResponseEntity<>(null, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * STAY SECTION
+     */
+
+    @GetMapping(value = "/getAllStays")
+    public ResponseEntity<List<Stay>> getAllStays() {
+        try {
+            log.info("called");
+            return new ResponseEntity<>(mainController.getAllStays(), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/getAllItineraryStays/{itineraryID}")
+    public ResponseEntity<List<Stay>> getAllItineraryStays(@PathVariable Long itineraryID) {
+        try {
+            log.info("called");
+            return new ResponseEntity<>(mainController.getAllItineraryStays(itineraryID), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/stay/{ID}")
+    public ResponseEntity<Stay> getStay(@PathVariable Long ID) {
+        try {
+            log.info("called");
+            Stay stay = mainController.getStayByID(ID);
+            if (stay != null) {
+                return new ResponseEntity<>(stay, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping(value = "/stay", consumes = "application/json")
+    public ResponseEntity<Stay> createStay(@RequestBody Stay stay) {
+        try {
+            log.info("called");
+            stay = mainController.createStay(stay);
+            if (stay != null) {
+                return new ResponseEntity<>(stay, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping(value = "/stay", consumes = "application/json")
+    public ResponseEntity<Stay> updateStay(@RequestBody Stay stay) {
+        try {
+            log.info("called");
+            stay = mainController.updateStay(stay);
+            if (stay != null) {
+                return new ResponseEntity<>(stay, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (IllegalArgumentException iae) {
+            log.error("failed due to: " + iae.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping(value = "/stay/{ID}")
+    public ResponseEntity<Stay> deleteStay(@PathVariable Long ID) {
+        try {
+            log.info("called");
+            int result = mainController.deleteStay(ID);
             if (result > 0) {
                 return new ResponseEntity<>(null, HttpStatus.OK);
             } else {

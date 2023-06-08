@@ -15,9 +15,6 @@ public interface ItineraryMapper {
     @Select("SELECT * FROM Itinerary")
     List<Itinerary> findAll();
 
-    @Select("SELECT * FROM Itinerary WHERE cityID = #{cityID} ")
-    List<Itinerary> findAllByCityID(@Param("cityID") Long cityID);
-
     @Insert("INSERT INTO Itinerary (userID, statusID, description, startDate, endDate) VALUES ( #{userID} , #{statusID} , #{description} , #{startDate} , #{endDate} )")
     int insertItinerary(Long ID, Long userID, Long statusID, String description, Date startDate, Date endDate);
 
