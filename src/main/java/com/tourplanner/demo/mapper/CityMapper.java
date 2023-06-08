@@ -24,6 +24,6 @@ public interface CityMapper {
     @Update("UPDATE City SET name = #{name} , latitude = #{latitude} , longitude = #{longitude} , altitude = #{altitude} WHERE ID = #{ID} ")
     int updateCity(String name, BigDecimal latitude, BigDecimal longitude, BigDecimal altitude, Long ID);
 
-    @Delete("DEKETE FROM City WHERE ID = #{ID}")
+    @Delete("DELETE FROM City WHERE ID = #{ID}")
     int deleteCity(Long ID);
 }
