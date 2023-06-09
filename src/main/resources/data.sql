@@ -1,7 +1,7 @@
-INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Genova', 44.5, 8.98, 0);
-INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Savona', 44.5, 8.98, 0);
-INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Imperia', 44.5, 8.98, 0);
-INSERT INTO City (name, latitude, longitude, altitude) VALUES ('La Spezia', 44.5, 8.98, 0);
+INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Genova', 44.40478, 8.94439, 19);
+INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Savona', 44.30905, 8.47715, 4);
+INSERT INTO City (name, latitude, longitude, altitude) VALUES ('Imperia', 43.88917, 8.03933, 10);
+INSERT INTO City (name, latitude, longitude, altitude) VALUES ('La Spezia', 44.103000, 9.823750, 3);
 
 INSERT INTO SkyCondition (condition) VALUES ('CLEAR_SKY');
 INSERT INTO SkyCondition (condition) VALUES ('CLOUDY');

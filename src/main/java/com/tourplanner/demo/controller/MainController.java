@@ -7,16 +7,20 @@ import com.tourplanner.demo.mapper.StayMapper;
 import com.tourplanner.demo.model.City;
 import com.tourplanner.demo.model.Itinerary;
 import com.tourplanner.demo.model.Stay;
+import com.tourplanner.demo.pojo.GeoCodingCity;
+import com.tourplanner.demo.pojo.GeoCodingResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Date;
 import java.util.List;
 
 @Controller
 public class MainController {
+
     @Autowired
     private CityMapper cityMapper;
 
@@ -69,8 +73,18 @@ public class MainController {
             if (city != null) {
                 throw new IllegalArgumentException("City already exists");
             }
-            //TODO fetch latitude, longitude and altitude from https://open-meteo.com/en/docs/geocoding-api
-            city = new City(name, 44.5, 8.98, 0.0);
+
+            WebClient webClient = WebClient.create("https://geocoding-api.open-meteo.com");
+
+            GeoCodingResponse geoCodingResponse = webClient.get().uri("/v1/search?count=10&language=en&format=json&name=" + name).retrieve().bodyToMono(GeoCodingResponse.class).block();
+
+            if (geoCodingResponse == null || geoCodingResponse.getResults() == null || geoCodingResponse.getResults().isEmpty()) {
+                throw new IllegalArgumentException("Could not geocode city");
+            }
+
+            GeoCodingCity geoCodingCity = geoCodingResponse.getResults().get(0);
+
+            city = new City(name, geoCodingCity.getLatitude(), geoCodingCity.getLongitude(), geoCodingCity.getElevation());
             int result = cityMapper.insertCity(city.getName(), city.getLatitude(), city.getLongitude(), city.getAltitude());
 
             if (result > 0) {
