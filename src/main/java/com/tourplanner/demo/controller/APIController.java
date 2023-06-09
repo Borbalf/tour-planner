@@ -3,6 +3,7 @@ package com.tourplanner.demo.controller;
 import com.tourplanner.demo.model.City;
 import com.tourplanner.demo.model.Itinerary;
 import com.tourplanner.demo.model.Stay;
+import com.tourplanner.demo.model.WeatherCondition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -305,6 +306,21 @@ public class APIController {
         } catch (IllegalArgumentException iae) {
             log.error("failed due to: " + iae.getMessage());
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * WEATHER CONDITION SECTION
+     */
+
+    @GetMapping(value = "/getAllWeatherConditions")
+    public ResponseEntity<List<WeatherCondition>> getAllWeatherConditions() {
+        try {
+            log.info("called");
+            return new ResponseEntity<>(mainController.getAllWeatherConditions(), HttpStatus.OK);
         } catch (Exception e) {
             log.error("failed due to: " + e.getMessage());
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);

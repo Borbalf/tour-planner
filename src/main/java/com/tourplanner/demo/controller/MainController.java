@@ -4,19 +4,27 @@ import com.tourplanner.demo.ITINERARY_STATUS;
 import com.tourplanner.demo.mapper.CityMapper;
 import com.tourplanner.demo.mapper.ItineraryMapper;
 import com.tourplanner.demo.mapper.StayMapper;
+import com.tourplanner.demo.mapper.WeatherConditionMapper;
 import com.tourplanner.demo.model.City;
 import com.tourplanner.demo.model.Itinerary;
 import com.tourplanner.demo.model.Stay;
+import com.tourplanner.demo.model.WeatherCondition;
 import com.tourplanner.demo.pojo.GeoCodingCity;
 import com.tourplanner.demo.pojo.GeoCodingResponse;
+import com.tourplanner.demo.pojo.WeatherData;
+import com.tourplanner.demo.pojo.WeatherResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Controller
 public class MainController {
@@ -30,7 +38,15 @@ public class MainController {
     @Autowired
     private StayMapper stayMapper;
 
+    @Autowired
+    private WeatherConditionMapper weatherConditionMapper;
+
     Logger log = LoggerFactory.getLogger(MainController.class);
+
+    public static final List<Long> CLEAR_WEATHER_IDS = List.of(0L, 1L);
+    public static final List<Long> OVERCAST_WEATHER_IDS = List.of(2L, 3L, 45L, 48L);
+    public static final List<Long> RAIN_WEATHER_IDS = List.of(51L, 53L, 55L, 61L, 63L, 65L, 80L, 81L, 82L, 95L, 96L, 99L);
+    public static final List<Long> SNOW_WEATHER_IDS = List.of(56L, 57L, 66L, 67L, 71L, 73L, 75L, 77L, 85L, 86L);
 
     /**
      * CITY SECTION
@@ -74,17 +90,7 @@ public class MainController {
                 throw new IllegalArgumentException("City already exists");
             }
 
-            WebClient webClient = WebClient.create("https://geocoding-api.open-meteo.com");
-
-            GeoCodingResponse geoCodingResponse = webClient.get().uri("/v1/search?count=10&language=en&format=json&name=" + name).retrieve().bodyToMono(GeoCodingResponse.class).block();
-
-            if (geoCodingResponse == null || geoCodingResponse.getResults() == null || geoCodingResponse.getResults().isEmpty()) {
-                throw new IllegalArgumentException("Could not geocode city");
-            }
-
-            GeoCodingCity geoCodingCity = geoCodingResponse.getResults().get(0);
-
-            city = new City(name, geoCodingCity.getLatitude(), geoCodingCity.getLongitude(), geoCodingCity.getElevation());
+            city = geocodeCity(name);
             int result = cityMapper.insertCity(city.getName(), city.getLatitude(), city.getLongitude(), city.getAltitude());
 
             if (result > 0) {
@@ -111,6 +117,7 @@ public class MainController {
             if (city == null) {
                 throw new IllegalArgumentException("City does not exists");
             }
+            city = geocodeCity(name);
             int result = cityMapper.updateCity(name, city.getLatitude(), city.getLongitude(), city.getAltitude(), ID);
 
             if (result > 0) {
@@ -287,8 +294,6 @@ public class MainController {
 
             int result = stayMapper.insertStay(stay.getItineraryID(), stay.getCityID(), stay.getDescription(), stay.getStayDate());
 
-            //TODO insert WeatherCondition
-
             if (result == 0) {
                 throw new Exception("error while inserting");
             }
@@ -306,6 +311,10 @@ public class MainController {
                     itineraryMapper.updateItinerary(itinerary.getID(), itinerary.getUserID(), ITINERARY_STATUS.READY.getID(), itinerary.getDescription(), itinerary.getStartDate(), itinerary.getEndDate());
                 }
             }
+
+            WeatherCondition weatherCondition = getWeather(city.getLatitude().doubleValue(), city.getLongitude().doubleValue(), city.getAltitude().doubleValue(), stay.getStayDate());
+            weatherCondition.setStayID(stayID);
+            weatherConditionMapper.insertWeatherCondition(weatherCondition.getStayID(), weatherCondition.getTemperature(), weatherCondition.getHumidity(), weatherCondition.getSkyConditionID());
 
             return stay;
         } catch (IllegalArgumentException iae) {
@@ -346,7 +355,10 @@ public class MainController {
             }
 
             if (!oldCityID.equals(stay.getCityID()) || !oldStayDate.equals(stay.getStayDate())) {
-                //TODO update WeatherCondition
+                weatherConditionMapper.deleteWeatherConditionByStayID(stay.getID());
+                WeatherCondition weatherCondition = getWeather(city.getLatitude().doubleValue(), city.getLongitude().doubleValue(), city.getAltitude().doubleValue(), stay.getStayDate());
+                weatherCondition.setStayID(stay.getID());
+                weatherConditionMapper.insertWeatherCondition(weatherCondition.getStayID(), weatherCondition.getTemperature(), weatherCondition.getHumidity(), weatherCondition.getSkyConditionID());
             }
 
             if (!oldItineraryID.equals(stay.getItineraryID())) {
@@ -382,5 +394,69 @@ public class MainController {
             log.error("failed due to: " + e.getMessage());
             return 0;
         }
+    }
+
+    /**
+     * WEATHER CONDITION SECTION
+     */
+
+    public List<WeatherCondition> getAllWeatherConditions() {
+        try {
+            log.info("called");
+            return weatherConditionMapper.findAll();
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * HELPER METHODS
+     */
+
+    private static City geocodeCity(String name) {
+        City city;
+        WebClient webClient = WebClient.create("https://geocoding-api.open-meteo.com");
+
+        GeoCodingResponse geoCodingResponse = webClient.get().uri("/v1/search?count=10&language=en&format=json&name=" + name).retrieve().bodyToMono(GeoCodingResponse.class).block();
+
+        if (geoCodingResponse == null || geoCodingResponse.getResults() == null || geoCodingResponse.getResults().isEmpty()) {
+            throw new IllegalArgumentException("Could not geocode city");
+        }
+
+        GeoCodingCity geoCodingCity = geoCodingResponse.getResults().get(0);
+
+        city = new City(name, geoCodingCity.getLatitude(), geoCodingCity.getLongitude(), geoCodingCity.getElevation());
+        return city;
+    }
+
+    private static WeatherCondition getWeather(Double latitude, Double longitude, Double elevation, Date stayDate) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dateString = sdf.format(stayDate);
+        WebClient webClient = WebClient.create("https://api.open-meteo.com");
+
+        WeatherResponse weatherResponse = webClient.get().uri("/v1/forecast?latitude="+ latitude + "&longitude=" + longitude + "&elevation=" + elevation + "&hourly=temperature_2m,relativehumidity_2m,weathercode&start_date=" + dateString + "&end_date=" + dateString + "&timezone=Europe/Berlin").retrieve().bodyToMono(WeatherResponse.class).block();
+
+        if (weatherResponse == null || weatherResponse.getHourly() == null) {
+            throw new IllegalArgumentException("Could not geocode city");
+        }
+
+        WeatherData weatherData = weatherResponse.getHourly();
+        Double meanTemperature = weatherData.getTemperature_2m().stream().mapToDouble(Double::doubleValue).average().orElse(Double.NaN);
+        Double meanHumidity = weatherData.getRelativehumidity_2m().stream().mapToDouble(Integer::doubleValue).average().orElse(Double.NaN);
+        Long maxWeather = weatherData.getWeathercode().stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue()).get().getValue();
+        Long skyConditionID = 1L;
+        if (OVERCAST_WEATHER_IDS.contains(maxWeather)) {
+            skyConditionID = 2L;
+        } else if (RAIN_WEATHER_IDS.contains(maxWeather)) {
+            skyConditionID = 3L;
+        } else if (SNOW_WEATHER_IDS.contains(maxWeather)) {
+            skyConditionID = 4L;
+        }
+
+        return new WeatherCondition(meanTemperature, meanHumidity, skyConditionID);
     }
 }
