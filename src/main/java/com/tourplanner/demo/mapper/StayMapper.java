@@ -12,13 +12,13 @@ public interface StayMapper {
     @Select("SELECT * FROM Stay WHERE ID = #{ID}")
     Stay findByID(@Param("ID") Long ID);
 
-    @Select("SELECT * FROM Stay")
+    @Select("SELECT * FROM Stay ORDER BY stayDate")
     List<Stay> findAll();
 
-    @Select("SELECT * FROM Stay WHERE cityID = #{cityID} ")
+    @Select("SELECT * FROM Stay WHERE cityID = #{cityID} ORDER BY stayDate")
     List<Stay> findAllByCityID(@Param("cityID") Long cityID);
 
-    @Select("SELECT * FROM Stay WHERE itineraryID = #{itineraryID} ")
+    @Select("SELECT * FROM Stay WHERE itineraryID = #{itineraryID} ORDER BY stayDate")
     List<Stay> findAllByItineraryID(@Param("itineraryID") Long itineraryID);
 
     @Insert("INSERT INTO Stay (itineraryID, cityID, description, stayDate) VALUES ( #{itineraryID} , #{cityID} , #{description} , #{stayDate} )")

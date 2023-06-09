@@ -1,6 +1,7 @@
 package com.tourplanner.demo.model;
 
 import java.util.Date;
+import java.util.List;
 
 public class Itinerary {
     private Long ID;
@@ -9,6 +10,7 @@ public class Itinerary {
     private String description;
     private Date startDate;
     private Date endDate;
+    private List<Stay> stays;
 
     public Long getID() {
         return ID;
@@ -56,5 +58,13 @@ public class Itinerary {
 
     public void setEndDate(Date endDate) {
         this.endDate = endDate;
+    }
+
+    public List<Stay> getStays() {
+        return stays;
+    }
+
+    public void setStays(List<Stay> stays) {
+        this.stays = stays;
     }
 }

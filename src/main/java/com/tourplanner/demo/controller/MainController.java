@@ -160,7 +160,9 @@ public class MainController {
     public Itinerary getItineraryByID(Long ID) {
         try {
             log.info("called with param: " + ID);
-            return itineraryMapper.findByID(ID);
+            Itinerary itinerary = itineraryMapper.findByID(ID);
+            itinerary.setStays(stayMapper.findAllByItineraryID(ID));
+            return itinerary;
         } catch (Exception e) {
             log.error("failed due to: " + e.getMessage());
             return null;
@@ -170,7 +172,15 @@ public class MainController {
     public List<Itinerary> getAllItineraries() {
         try {
             log.info("called");
-            return itineraryMapper.findAll();
+            List<Itinerary> itineraries = itineraryMapper.findAll();
+            for (Itinerary itinerary : itineraries) {
+                List<Stay> stays = stayMapper.findAllByItineraryID(itinerary.getID());
+                for (Stay stay : stays) {
+                    stay.setWeatherCondition(weatherConditionMapper.findByStayID(stay.getID()));
+                }
+                itinerary.setStays(stays);
+            }
+            return itineraries;
         } catch (Exception e) {
             log.error("failed due to: " + e.getMessage());
             return null;
@@ -252,7 +262,9 @@ public class MainController {
     public Stay getStayByID(Long ID) {
         try {
             log.info("called with param: " + ID);
-            return stayMapper.findByID(ID);
+            Stay stay = stayMapper.findByID(ID);
+            stay.setWeatherCondition(weatherConditionMapper.findByStayID(ID));
+            return stay;
         } catch (Exception e) {
             log.error("failed due to: " + e.getMessage());
             return null;
@@ -262,7 +274,11 @@ public class MainController {
     public List<Stay> getAllStays() {
         try {
             log.info("called");
-            return stayMapper.findAll();
+            List<Stay> stays = stayMapper.findAll();
+            for (Stay stay : stays) {
+                stay.setWeatherCondition(weatherConditionMapper.findByStayID(stay.getID()));
+            }
+            return stays;
         } catch (Exception e) {
             log.error("failed due to: " + e.getMessage());
             return null;
@@ -272,7 +288,11 @@ public class MainController {
     public List<Stay> getAllItineraryStays(Long itineraryID) {
         try {
             log.info("called");
-            return stayMapper.findAllByItineraryID(itineraryID);
+            List<Stay> stays = stayMapper.findAllByItineraryID(itineraryID);
+            for (Stay stay : stays) {
+                stay.setWeatherCondition(weatherConditionMapper.findByStayID(stay.getID()));
+            }
+            return stays;
         } catch (Exception e) {
             log.error("failed due to: " + e.getMessage());
             return null;
@@ -384,8 +404,7 @@ public class MainController {
     public int deleteStay(Long ID) {
         try {
             log.info("called");
-            //TODO decomment after weatherCondition CRUD
-            //weatherConditionMapper.deleteByStayID(ID);
+            weatherConditionMapper.deleteWeatherConditionByStayID(ID);
             return stayMapper.deleteStay(ID);
         } catch (IllegalArgumentException iae) {
             log.error("failed due to: " + iae.getMessage());

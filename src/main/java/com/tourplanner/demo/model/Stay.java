@@ -8,6 +8,7 @@ public class Stay {
     private Long cityID;
     private String description;
     private Date stayDate;
+    private WeatherCondition weatherCondition;
 
     public Long getID() {
         return ID;
@@ -47,5 +48,13 @@ public class Stay {
 
     public void setStayDate(Date stayDate) {
         this.stayDate = stayDate;
+    }
+
+    public WeatherCondition getWeatherCondition() {
+        return weatherCondition;
+    }
+
+    public void setWeatherCondition(WeatherCondition weatherCondition) {
+        this.weatherCondition = weatherCondition;
     }
 }
