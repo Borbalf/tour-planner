@@ -1,14 +1,8 @@
 package com.tourplanner.demo.controller;
 
 import com.tourplanner.demo.ITINERARY_STATUS;
-import com.tourplanner.demo.mapper.CityMapper;
-import com.tourplanner.demo.mapper.ItineraryMapper;
-import com.tourplanner.demo.mapper.StayMapper;
-import com.tourplanner.demo.mapper.WeatherConditionMapper;
-import com.tourplanner.demo.model.City;
-import com.tourplanner.demo.model.Itinerary;
-import com.tourplanner.demo.model.Stay;
-import com.tourplanner.demo.model.WeatherCondition;
+import com.tourplanner.demo.mapper.*;
+import com.tourplanner.demo.model.*;
 import com.tourplanner.demo.pojo.GeoCodingCity;
 import com.tourplanner.demo.pojo.GeoCodingResponse;
 import com.tourplanner.demo.pojo.WeatherData;
@@ -34,6 +28,9 @@ import java.util.stream.Collectors;
 public class MainController {
 
     @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
     private CityMapper cityMapper;
 
     @Autowired
@@ -51,6 +48,52 @@ public class MainController {
     public static final List<Long> OVERCAST_WEATHER_IDS = List.of(2L, 3L, 45L, 48L);
     public static final List<Long> RAIN_WEATHER_IDS = List.of(51L, 53L, 55L, 61L, 63L, 65L, 80L, 81L, 82L, 95L, 96L, 99L);
     public static final List<Long> SNOW_WEATHER_IDS = List.of(56L, 57L, 66L, 67L, 71L, 73L, 75L, 77L, 85L, 86L);
+
+    /**
+     * USER SECTION
+     */
+
+    public User getUserByID(Long ID) {
+        try {
+            log.info("called with param: " + ID);
+            User user = userMapper.findByID(ID);
+            List<Itinerary> itineraries = itineraryMapper.findAllByUserID(ID);
+            for (Itinerary itinerary : itineraries) {
+                List<Stay> stays = stayMapper.findAllByItineraryID(itinerary.getID());
+                for (Stay stay : stays) {
+                    stay.setWeatherCondition(weatherConditionMapper.findByStayID(stay.getID()));
+                }
+                itinerary.setStays(stays);
+            }
+            user.setItineraries(itineraries);
+            return user;
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public List<User> getAllUsers() {
+        try {
+            log.info("called");
+            List<User> users = userMapper.findAll();
+            for (User user : users) {
+                List<Itinerary> itineraries = itineraryMapper.findAllByUserID(user.getID());
+                for (Itinerary itinerary : itineraries) {
+                    List<Stay> stays = stayMapper.findAllByItineraryID(itinerary.getID());
+                    for (Stay stay : stays) {
+                        stay.setWeatherCondition(weatherConditionMapper.findByStayID(stay.getID()));
+                    }
+                    itinerary.setStays(stays);
+                }
+                user.setItineraries(itineraries);
+            }
+            return users;
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return null;
+        }
+    }
 
     /**
      * CITY SECTION

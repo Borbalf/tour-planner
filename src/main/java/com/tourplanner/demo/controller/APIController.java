@@ -1,9 +1,6 @@
 package com.tourplanner.demo.controller;
 
-import com.tourplanner.demo.model.City;
-import com.tourplanner.demo.model.Itinerary;
-import com.tourplanner.demo.model.Stay;
-import com.tourplanner.demo.model.WeatherCondition;
+import com.tourplanner.demo.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +17,37 @@ public class APIController {
     private MainController mainController;
 
     Logger log = LoggerFactory.getLogger(APIController.class);
+
+    /**
+     * USER SECTION
+     */
+
+    @GetMapping(value = "/getAllUsers")
+    public ResponseEntity<List<User>> getAllUsers() {
+        try {
+            log.info("called");
+            return new ResponseEntity<>(mainController.getAllUsers(), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/user/{ID}")
+    public ResponseEntity<User> getUserByID(@PathVariable Long ID) {
+        try {
+            log.info("called");
+            User city = mainController.getUserByID(ID);
+            if (city != null) {
+                return new ResponseEntity<>(city, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     /**
      * CITY SECTION
@@ -306,21 +334,6 @@ public class APIController {
         } catch (IllegalArgumentException iae) {
             log.error("failed due to: " + iae.getMessage());
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            log.error("failed due to: " + e.getMessage());
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * WEATHER CONDITION SECTION
-     */
-
-    @GetMapping(value = "/getAllWeatherConditions")
-    public ResponseEntity<List<WeatherCondition>> getAllWeatherConditions() {
-        try {
-            log.info("called");
-            return new ResponseEntity<>(mainController.getAllWeatherConditions(), HttpStatus.OK);
         } catch (Exception e) {
             log.error("failed due to: " + e.getMessage());
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);

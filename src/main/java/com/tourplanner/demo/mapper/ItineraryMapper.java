@@ -9,11 +9,14 @@ import java.util.List;
 @Mapper
 public interface ItineraryMapper {
 
-    @Select("SELECT * FROM Itinerary WHERE ID = #{ID}")
+    @Select("SELECT * FROM Itinerary WHERE ID = #{ID} ")
     Itinerary findByID(@Param("ID") Long ID);
 
     @Select("SELECT * FROM Itinerary")
     List<Itinerary> findAll();
+
+    @Select("SELECT * FROM Itinerary WHERE userID = #{userID} ")
+    List<Itinerary> findAllByUserID(@Param("userID") Long userID);
 
     @Insert("INSERT INTO Itinerary (userID, statusID, description, startDate, endDate) VALUES ( #{userID} , #{statusID} , #{description} , #{startDate} , #{endDate} )")
     int insertItinerary(Long ID, Long userID, Long statusID, String description, Date startDate, Date endDate);
