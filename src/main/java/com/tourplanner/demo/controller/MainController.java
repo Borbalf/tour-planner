@@ -16,10 +16,13 @@ import com.tourplanner.demo.pojo.WeatherResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Controller
+@EnableScheduling
 public class MainController {
 
     @Autowired
@@ -161,7 +165,11 @@ public class MainController {
         try {
             log.info("called with param: " + ID);
             Itinerary itinerary = itineraryMapper.findByID(ID);
-            itinerary.setStays(stayMapper.findAllByItineraryID(ID));
+            List<Stay> stays = stayMapper.findAllByItineraryID(ID);
+            for (Stay stay : stays) {
+                stay.setWeatherCondition(weatherConditionMapper.findByStayID(stay.getID()));
+            }
+            itinerary.setStays(stays);
             return itinerary;
         } catch (Exception e) {
             log.error("failed due to: " + e.getMessage());
@@ -218,6 +226,18 @@ public class MainController {
             if (itineraryToUpdate == null) {
                 throw new IllegalArgumentException("Itinerary does not exists");
             }
+
+            List<Stay> stays = stayMapper.findAllByItineraryID(itinerary.getID());
+            for (Stay stay : stays) {
+                stay.setWeatherCondition(weatherConditionMapper.findByStayID(stay.getID()));
+            }
+            itineraryToUpdate.setStays(stays);
+            if (stays.size() < 2) {
+                itineraryToUpdate.setStatusID(ITINERARY_STATUS.NOT_READY.getID());
+            } else {
+                itineraryToUpdate.setStatusID(itinerary.getStatusID());
+            }
+
             itineraryMapper.updateItinerary(itinerary.getID(), itinerary.getUserID(), itineraryToUpdate.getStatusID(), itinerary.getDescription(), itinerary.getStartDate(), itinerary.getEndDate());
 
             itinerary = itineraryMapper.findByID(itinerary.getID());
@@ -430,6 +450,29 @@ public class MainController {
     }
 
     /**
+     * SCHEDULED METHODS
+     */
+
+    @Scheduled(cron = "1 0 0 * * *")
+    public void updateItineraries() {
+        long startTime = System.currentTimeMillis();
+        try {
+            List<Itinerary> itineraries = getAllItineraries();
+            Date now = Calendar.getInstance().getTime();
+            for (Itinerary itinerary : itineraries) {
+                if (itinerary.getStays() != null && itinerary.getStays().size() >= 2 && itinerary.getEndDate().before(now)) {
+                    itinerary.setStatusID(ITINERARY_STATUS.DONE.getID());
+                    updateItinerary(itinerary);
+                }
+            }
+        } catch (Exception e) {
+            log.error("failed due to: " + e.getMessage());
+        } finally {
+            log.info("DONE, took " + (System.currentTimeMillis() - startTime) + "ms");
+        }
+    }
+
+    /**
      * HELPER METHODS
      */
 
@@ -454,7 +497,7 @@ public class MainController {
         String dateString = sdf.format(stayDate);
         WebClient webClient = WebClient.create("https://api.open-meteo.com");
 
-        WeatherResponse weatherResponse = webClient.get().uri("/v1/forecast?latitude="+ latitude + "&longitude=" + longitude + "&elevation=" + elevation + "&hourly=temperature_2m,relativehumidity_2m,weathercode&start_date=" + dateString + "&end_date=" + dateString + "&timezone=Europe/Berlin").retrieve().bodyToMono(WeatherResponse.class).block();
+        WeatherResponse weatherResponse = webClient.get().uri("/v1/forecast?latitude=" + latitude + "&longitude=" + longitude + "&elevation=" + elevation + "&hourly=temperature_2m,relativehumidity_2m,weathercode&start_date=" + dateString + "&end_date=" + dateString + "&timezone=Europe/Berlin").retrieve().bodyToMono(WeatherResponse.class).block();
 
         if (weatherResponse == null || weatherResponse.getHourly() == null) {
             throw new IllegalArgumentException("Could not geocode city");
